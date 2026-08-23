@@ -1,0 +1,10 @@
+{
+  "project": "legacy-app-explorer",
+  "title": "Explorador Legacy → Web",
+  "demoProject": "legacy-app-explorer-demo",
+  "status": "READY",
+  "slug": "legacy",
+  "suggestedFutureUrl": "legacy.<domain>",
+  "thumbnail": "assets/img/placeholder.svg",
+  "demoUrl": null
+}

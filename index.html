@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Atlas Operations — Legacy → Web Demo</title>
+  <meta name="description" content="Demo interactiva Atlas Operations: transformación Legacy (VB6) → Web moderna. Datos 100% ficticios, estado en memoria.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>
+    /* Modal override for detail/views */
+    .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+    .modal{background:#fff;border-radius:16px;max-width:760px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    .modal-head{padding:14px 16px;border-bottom:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff}
+    .modal-body{padding:16px}
+    .modal-footer{padding:12px 16px;border-top:1px solid #E5E7EB;display:flex;justify-content:flex-end;gap:8px}
+    .modal-title{margin:0;font-size:15px}
+    .close-modal{background:0;border:0;padding:4px 8px;font-size:1rem;cursor:pointer}
+    .detail-card{border:1px solid #E2E8F0;border-radius:12px;padding:12px;background:#FAFAFA}
+    .detail-row{display:flex;justify-content:space-between;margin:6px 0;font-size:13px}
+    .detail-row span{color:#475569}
+    @media(max-width:640px){.compare-grid{grid-template-columns:1fr !important}}.toast-container{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:60}.toast{background:#0F172A;color:#fff;padding:10px 14px;border-radius:999x;font-size:13px;box-shadow:0 10px 24px rgba(0,0,0,.2)}</style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark">A</div>
+        <div>
+          <h1>Atlas Operations <span style="font-weight:600;color:var(--muted)">· Demo</span></h1>
+          <p>Transformación Legacy → Web · datos ficticios · estado temporal</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-demo">Demo aislada</span>
+        <span class="badge badge-ficticio">Datos ficticios</span>
+        <span class="badge" id="syncBadge">SYNCED</span>
+      </div>
+      <div class="header-actions">
+        <!-- Mode switch -->
+        <div class="mode-switch">
+          <button data-mode="legacy" class="active">Legacy</button>
+          <button data-mode="web">Web</button>
+        </div>
+        <!-- Slider comparison -->
+        <div class="slider-wrap">
+          <div class="slider-before" style="background:#C0C0C0"></div>
+          <div class="slider-after" style="background:#F8FAFC"></div>
+          <div class="slider-handle"></div>
+        </div>
+        <button class="btn ghost small" id="resetBtn" title="Restaura datos ficticios">↺ Reset Demo</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-grid">
+        <div class="hero-card" aria-labelledby="hero-sub">
+          <h2 id="hero-title">Transformación <span style="color:#67E8F9">Legacy → Web</span></h2>
+          <p id="hero-sub">Atlas Operations presenta cómo una aplicación legacy/de escritorio se reinterpretó en una experiencia web moderna. Slider interactivo, flujos completos y datos 100% ficticios.</p>
+          <div class="transform-note">Interfaz legacy presentada como contexto histórico/tecnológico; no se ridiculiza. La evolución se muestra mediante comparador slider y navegación entre modos.</div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat card"><b>12</b> órdenes activas</div>
+          <div class="stat card"><b>4</b> módulos principales</div>
+          <div class="stat card"><b>40+</b> flujos documentados</div>
+          <div class="stat card"><b>0</b> datos reales</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="compare-section" aria-labelledby="compare-title">
+      <div class="compare-header">
+        <h3 id="compare-title">Comparador: Legacy ↔ Web</h3>
+        <div class="flow-chips">
+          <button class="chip active" data-col="2">2 columnas</button>
+          <button class="chip" data-col="1">1 columna</button>
+        </div>
+      </div>
+      <div class="compare-grid" id="compareGrid">
+        <!-- Legacy pane -->
+        <div class="pane-head"><b>Legacy (VB6 / Escritorio)</b><small>Contexto histórico</small></div>
+        <div class="pane-body legacy-bg" aria-label="Interfaz legacy">
+          <div class="vb-window-container">
+            <div id="legacyWindow" class="vb-window">
+              <div class="vb-title">
+                <span>Sistema Atlas</span>
+                <div class="vb-btns">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+              <div class="vb-body">
+                <div id="legacyFields" class="vb-grid">
+                  <!-- Fields populated by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="legacy-caption">Interfaz legacy VB6 — botones, grids y validaciones tal como operaban históricamente</div>
+        </div>
+
+        <!-- Web pane -->
+        <div class="pane-head"><b>Web (Moderna)</b><small>Experiencia actual</small></div>
+        <div class="pane-body web-bg hidden" aria-label="Interfaz web moderna">
+          <div class="web-preview">
+            <div class="web-preview-head">
+              <b>Atlas Operations — Web (Modo Moderno)</b>
+              <button class="btn btn-icon" id="closeWebPreview" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="web-preview-body">
+              <form id="form-demo" class="form-grid">
+                <div class="form-group"><label>Tipo orden</label><select class="form-input" id="w-tipo"></select></div>
+                <div class="form-group"><label>Orden F</label><input class="form-input" id="w-orden" placeholder="00045821" required></div>
+                <div class="form-group full"><label>Descripción</label><input class="form-input" readonly value="Cuerpo fundición ligera"></div>
+                <div class="form-group"><label>Proceso</label><select class="form-input" id="w-proceso"></select></div>
+                <div class="form-group"><label>Nro Operación</label><input class="form-input" id="w-nro" value="10" min="1" required></div>
+                <div class="form-group"><label>Máquina</label><select class="form-input" id="w-maquina"></select></div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Confirmar</button>
+                  <button type="button" class="btn btn-outline" data-go="dashboard">Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-shell" aria-label="Aplicación completa">
+      <div class="shell-grid">
+        <!-- Sidebar -->
+        <aside class="sidebar" aria-label="Menú principal">
+          <div class="sidebar-brand">
+            <div class="logo">A</div>
+            <div>
+              <span>Atlas Operations</span>
+              <small>Producción</small>
+            </div>
+          </div>
+          <div class="nav-section">Módulos</div>
+          <button type="button" class="nav-item" data-route="dashboard" data-section="inicio">Inicio</button>
+          <div class="nav-section">Operaciones</div>
+          <button type="button" class="nav-item" data-route="apertura" data-section="operaciones">Iniciar operación</button>
+          <button type="button" class="nav-item" data-route="cierre" data-section="operaciones">Cerrar operación</button>
+          <button type="button" class="nav-item" data-route="operaciones-abiertas" data-section="operaciones">Operaciones abiertas</button>
+          <div class="nav-section">Órdenes</div>
+          <button type="button" class="nav-item" data-route="buscador-of" data-section="ordenes">Buscador de Orden F</button>
+          <div class="nav-section">Historial</div>
+          <button type="button" class="nav-item" data-route="historial" data-section="historial">Historial operaciones</button>
+          <div class="nav-section">Administración</div>
+          <button type="button" class="nav-item" data-route="usuarios" data-section="admin">Usuarios</button>
+          <div class="sidebar-footer">
+            <button type="button" class="nav-item text-warning" id="btn-reset-demo">Restablecer demo</button>
+            <button type="button" class="nav-item" id="btn-logout">Cerrar sesión</button>
+          </div>
+        </aside>
+
+        <!-- Content area -->
+        <div class="content" aria-label="Contenido principal">
+          <header class="topbar">
+            <h2 id="page-title">Inicio</h2>
+            <div class="topbar-right">
+              <span class="demo-badge">DEMO LOCAL</span>
+              <div class="user-menu">
+                <span id="user-name">—</span>
+                <small id="user-role">—</small>
+              </div>
+            </div>
+          </header>
+          <main id="page-content" class="page-content"></main>
+          <footer class="app-footer">BIOTROM Production Portal · Versión 1.0.0 · Prototipo sin conexión a red ni MDB</footer>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal overlay for details -->
+    <div id="modal-overlay" class="modal-overlay hidden" data-modal-close>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-header">
+          <h2 id="modalTitle">Detalle</h2>
+          <button type="button" class="close-modal" data-modal-close>✕</button>
+        </div>
+        <div id="modalBody" class="modal-body"></div>
+        <div id="modalFooter" class="modal-footer"></div>
+      </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
+  </main>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    // Inicialización global
+    if (typeof window !== 'undefined') {
+      window.ATLAS_SEED = <?php echo json_encode(ATLAS_SEED); ?>;
+      window.ATLAS_DEMO = { STATE, MODE, resetState, render, showToast };
+    }
+  </script>
+</body>
+</html>
